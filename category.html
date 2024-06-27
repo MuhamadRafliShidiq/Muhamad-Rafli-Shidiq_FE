@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background-image: url('https://i.pinimg.com/564x/e7/7e/c5/e77ec531bae3e7e1cf95213a9e3e40c1.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+
+    table {
+      text-align: center;
+    }
+
+    .custom-bg {
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+
+<body class="bg-cover bg-center bg-fixed text-white">
+  <div class="container mx-auto py-8">
+    <div class="max-w-lg mx-auto bg-gray-800 p-6 rounded-lg shadow-lg custom-bg mb-4">
+      <input type="text" placeholder="Category Name" id="name"
+        class="block w-full mb-4 px-4 py-2 rounded-lg focus:outline-none focus:ring focus:border-blue-300 text-black" />
+      <button type="button" id="save" onclick="SaveCategory()"
+        class="block w-full mb-4 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring focus:border-blue-300 font-semibold">
+        Save
+      </button>
+      <button type="button" onclick="location.href='Admin.html'"
+        class="block w-full px-4 py-2 rounded-lg bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring focus:border-blue-300 font-semibold">
+        Kembali
+      </button>
+    </div>
+
+    <table class="mx-auto mb-8 bg-gray-800 rounded-lg shadow-lg overflow-hidden custom-bg">
+      <thead class="bg-gray-700 text-gray-200">
+        <tr>
+          <th class="px-4 py-2">ID</th>
+          <th class="px-4 py-2">Category</th>
+          <th class="px-4 py-2">Action</th>
+        </tr>
+      </thead>
+      <tbody id="result"></tbody>
+    </table>
+  </div>
+
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script>
+    const GetCategory = async () => {
+      await axios
+        .get(`http://localhost:3000/category`)
+        .then((response) => {
+          console.log(response.data);
+          const categories = response.data;
+          let bucket = "";
+          categories.forEach((category, index) => {
+            bucket += `
+                <tr>
+                    <td class="px-4 py-2">${index + 1}</td>
+                    <td class="px-4 py-2" id="category_${index}">${category.name}</td>            
+                    <td class="px-4 py-2">
+                      <button onclick="Delete('${category.id}')" type="button" class="px-2 py-1 bg-red-500 hover:bg-red-600 rounded">Delete</button>
+                      <button onclick="EditCategory('${category.id}', ${index})" type="button" class="px-2 py-1 bg-yellow-500 hover:bg-yellow-600 rounded">Update</button>
+                    </td>
+                </tr>`;
+          });
+          document.getElementById("result").innerHTML = bucket;
+        })
+        .catch((error) => {
+          alert(error.message);
+        });
+    };
+
+    GetCategory();
+
+    const SaveCategory = async () => {
+      let name = document.getElementById("name").value;
+      await axios.post(`http://localhost:3000/category`, {
+          name: name
+        })
+        .then((Response) => {
+          console.log(Response);
+          GetCategory();
+        })
+        .catch((error) => {
+          alert(error.message);
+        });
+    };
+
+    const Delete = async (id) => {
+      if (confirm(`Are you sure you want to delete this item?`)) {
+        await axios.delete(`http://localhost:3000/category/${id}`)
+          .then((Response) => {
+            console.log(Response);
+            GetCategory();
+          })
+          .catch((error) => {
+            alert(error.message);
+          });
+      }
+    };
+
+    const EditCategory = async (id) => {
+      await axios.get(`http://localhost:3000/category/${id}`)
+        .then((response) => {
+          const category = response.data;
+          document.getElementById("name").value = category.name;
+          document.getElementById("save").innerText = "Update";
+          document
+            .getElementById("save")
+            .setAttribute("onclick", `UpdateCategory('${id}')`);
+          console.log(response);
+        })
+        .catch((error) => {
+          alert(error.message);
+        });
+    };
+
+    const UpdateCategory = async (id) => {
+      let name = document.getElementById("name").value;
+      await axios.patch(`http://localhost:3000/category/${id}`, {
+          name: name,
+        })
+        .then((response) => {
+          console.log(response);
+          document.getElementById("name").value = "";
+          document.getElementById("save").innerText = "Save";
+          document
+            .getElementById("save")
+            .setAttribute("onclick", `SaveCategory()`);
+          GetCategory();
+        })
+        .catch((error) => {
+          alert(error.message);
+        });
+    };
+  </script>
+</body>
+
+</html>
